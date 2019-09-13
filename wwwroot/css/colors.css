@@ -1,0 +1,16 @@
+#colors .swatch {
+    width: 20px;
+    height: 20px;
+}
+
+#colors .preview {
+    max-width: 80%;
+}
+
+.colorPalette ol {
+    list-style-type: none;
+}
+
+.colorPalette li {
+    display: inline-block;
+}

@@ -1,0 +1,35 @@
+@using Microsoft.Office.ColorExtraction.ColorPalettes
+@using Microsoft.Office.ColorExtraction.Scoring
+
+<div class="colorPalette">
+    <ol>
+        @foreach (var pair in Values.OrderBy(pair => pair.Value.Index))
+        {
+            <li>
+                <div class="swatch" title="@pair.Key" style="background:@(GetCssColor(pair.Value.Color));"></div>
+            </li>
+        }
+    </ol>
+</div>
+
+@code {
+    [Parameter]
+    public IReadOnlyDictionary<OfficeColorNames, IndexedColor> IndexedColors
+    {
+        set => Values = value.ToDictionary(pair => pair.Key.ToString(), pair => pair.Value);
+    }
+
+    [Parameter]
+    public IReadOnlyDictionary<string, IndexedColor> IndexedUsedSeedColors
+    {
+        set => Values = value;
+    }
+
+    private IReadOnlyDictionary<string, IndexedColor> Values { get; set; }
+
+    private string GetCssColor(Microsoft.Office.Dlur.CommonMath.Color color)
+    {
+        var s = color.ToHexString();   // this is ARGB, convert to RGBA
+        return "#" + s.Substring(3) + s.Substring(1,2);
+    }
+}

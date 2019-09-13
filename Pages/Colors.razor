@@ -1,0 +1,83 @@
+@page "/colors"
+
+@using WebApp.Data
+@inject ColorExtractionService Service
+@inject IJSRuntime JsRuntime
+
+<div id="colors">
+    <h1>Color Palette Extraction</h1>
+
+    <EditForm Model="@Model" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <input type="file" id="imageInput"/>
+        <button type="submit">Extract</button>
+
+        <div>
+            <p>Contrast Thresholds</p>
+
+            <label for="accentAndTB">Accent &amp; TB</label>
+            <InputNumber id="accentAndTB" @bind-Value="@Model.accentAndTBContrastThreshold"/>
+
+            <label for="tb">TB</label>
+            <InputNumber id="tb" @bind-Value="@Model.tbContrastThreshold"/>
+
+            <label for="hlAndFhl">HL &amp; FHL</label>
+            <InputNumber id="hlAndFhl" @bind-Value="@Model.hlAndFhlContrastThreshold"/>
+        </div>
+    </EditForm>
+
+    <img class="preview" src="@ImageData" />
+
+    @if (Palettes?.Any() == true)
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Legibility</th>
+                    <th>Color Coverage</th>
+                    <th>Color Distance</th>
+                    <th>Inspiring Factor</th>
+                    <th>Seed Colors</th>
+                    <th>Colors</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var palette in Palettes)
+                {
+                    <tr>
+                        <td>@palette.Name</td>
+                        <td>@palette.LegibilityScore</td>
+                        <td>@String.Join(", ", palette.ColorCoverage)</td>
+                        <td>@ToPercentage(palette.ColorDistance)</td>
+                        <td>@ToPercentage(palette.AverageInspiringFactor)</td>
+                        <td><ColorPaletteComponent IndexedUsedSeedColors=@palette.IndexedUsedSeedColors/></td>
+                        <td><ColorPaletteComponent IndexedColors=@palette.IndexedColors/></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private ColorExtractionModel Model = new ColorExtractionModel();
+    private Microsoft.Office.ColorExtraction.ColorPalettes.ColorPalette[] Palettes;
+
+    private string ImageData { get; set; }
+
+    private string ToPercentage(double value)
+    {
+        return Math.Round(value * 100, 2) + "%";
+    }
+
+    private async Task OnValidSubmit()
+    {
+        Palettes = null;
+        ImageData = await JsRuntime.InvokeAsync<string>("util.readFileBase64FromId", "imageInput");
+        Model.ImageBase64 = ImageData.Substring(ImageData.IndexOf(',') + 1);
+        Palettes = await Service.GetColorPalettesAsync(Model);
+    }
+}
